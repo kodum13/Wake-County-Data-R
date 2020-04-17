@@ -10,7 +10,7 @@ library("sf")
 library("leaflet")
 
 # City of Raleigh Mayor race from 2017
-res_path <- "C:/Users/kodum/OneDrive/Documents/Wake County Project/City of Raleigh Mayor 10_2017.csv"
+res_path <- "~/City of Raleigh Mayor 10_2017.csv"
 res_old <- rio::import(res_path)
 
 res_old$PRECINCT_CODE <- substr(res_old$Precinct,6,10)
@@ -24,7 +24,7 @@ res_old$NancyPct <- (res_old$`Nancy McFarlane`-res_old$`Charles Francis`) / (res
 res_old$FrancisPct <- (res_old$`Charles Francis`-res_old$`Nancy McFarlane`) / (res_old$`Nancy McFarlane`+res_old$`Charles Francis`)
 
 # Most recent Raleigh Mayor race
-rec_df <- read.csv(file="C:/Users/kodum/OneDrive/Documents/Wake County Project/007 City of Raleigh Mayor 10_08_2019.csv")
+rec_df <- read.csv(file="~/007 City of Raleigh Mayor 10_08_2019.csv")
 
 colnames(rec_df) <- c("Precinct_orig", "Mary.Ann.Baldwin","Zainab.Baloch", "Charles.Francis","George.Knott", "Caroline.Sullivan", "Justin.L.Sutton", "WRITE.IN")
 rec_df$PRECINCT_CODE <- substr(rec_df$Precinct_orig,6,10)
@@ -38,7 +38,7 @@ rec_df$MarginPct <- (rec_df$Mary.Ann.Baldwin-rec_df$Charles.Francis) /
   (rowSums(rec_df[2:8]))
   
  # Shape file for Wake County
-wc_shapefile <- "C:/Users/kodum/OneDrive/Documents/Wake County Project/Wake_Precincts_2019_05.shp"
+wc_shapefile <- "~/Wake_Precincts_2019_05.shp"
 
 geo <- read_shape(file=wc_shapefile, as.sf=TRUE)
 
