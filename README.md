@@ -7,7 +7,10 @@ The shape files were downloaded from the Wake County site at:
 http://www.wakegov.com/gis/services/pages/data.aspx
 
 This map shows the vote differential by precinct with darker green representing more votes for Baldwin and darker red (negative values) for Francis.
-Since it was a mayoral race, not all of Wake County was included so gray areas show precincts in Wake County but not in Raleigh proper.
+Since it was a mayoral race, not all Wake County precincts were included so gray areas show precincts in Wake County but not in Raleigh proper. The first shows the margin from vote count and the second shows the percent difference.
 
-![Margin Difference](Wake-County-Data-R/blob/master/RaleighMayorMarginPct.PNG)
+![Margin Difference](https://github.com/kodum13/Wake-County-Data-R/blob/master/RaleighMayorRace.PNG)
+
+![Margin Difference](https://github.com/kodum13/Wake-County-Data-R/blob/master/RaleighMayorMarginPct.PNG)
+
 
