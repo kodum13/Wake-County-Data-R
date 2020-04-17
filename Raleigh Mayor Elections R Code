@@ -1,0 +1,57 @@
+install.packages("rio")
+install.packages("tmap")
+install.packages("tmaptools")
+install.packages("sf")
+install.packages("leaflet")
+install.packages("XML")
+library("tmap")
+library("tmaptools")
+library("sf")
+library("leaflet")
+
+# City of Raleigh Mayor race from 2017
+res_path <- "C:/Users/kodum/OneDrive/Documents/Wake County Project/City of Raleigh Mayor 10_2017.csv"
+res_old <- rio::import(res_path)
+
+res_old$PRECINCT_CODE <- substr(res_old$Precinct,6,10)
+res_old <- res_old[,-1]
+
+res_old <- aggregate(res_old[-5], by = list(res_old$PRECINCT_CODE), sum)
+colnames(res_old)<-c("Precinct", "Paul Fitts", "Charles Francis", "Nancy McFarlane", "Write-in")
+
+res_old$margin <- res_old$`Nancy McFarlane`-res_old$`Charles Francis`
+res_old$NancyPct <- (res_old$`Nancy McFarlane`-res_old$`Charles Francis`) / (res_old$`Nancy McFarlane`+res_old$`Charles Francis`)
+res_old$FrancisPct <- (res_old$`Charles Francis`-res_old$`Nancy McFarlane`) / (res_old$`Nancy McFarlane`+res_old$`Charles Francis`)
+
+# Most recent Raleigh Mayor race
+rec_df <- read.csv(file="C:/Users/kodum/OneDrive/Documents/Wake County Project/007 City of Raleigh Mayor 10_08_2019.csv")
+
+colnames(rec_df) <- c("Precinct_orig", "Mary.Ann.Baldwin","Zainab.Baloch", "Charles.Francis","George.Knott", "Caroline.Sullivan", "Justin.L.Sutton", "WRITE.IN")
+rec_df$PRECINCT_CODE <- substr(rec_df$Precinct_orig,6,10)
+rec_df <- rec_df[,-1]
+
+rec_df <- aggregate(rec_df[-8], by = list(rec_df$PRECINCT_CODE), sum)
+colnames(rec_df) <- c("Precinct", "Mary.Ann.Baldwin","Zainab.Baloch", "Charles.Francis","George.Knott", "Caroline.Sullivan", "Justin.L.Sutton", "WRITE.IN")
+
+rec_df$margin <- rec_df$Mary.Ann.Baldwin-rec_df$Charles.Francis
+rec_df$MarginPct <- (rec_df$Mary.Ann.Baldwin-rec_df$Charles.Francis) / 
+  (rowSums(rec_df[2:8]))
+  
+ # Shape file for Wake County
+wc_shapefile <- "C:/Users/kodum/OneDrive/Documents/Wake County Project/Wake_Precincts_2019_05.shp"
+
+geo <- read_shape(file=wc_shapefile, as.sf=TRUE)
+
+qtm(geo)
+
+geo$PRECINCT <- as.character(geo$PRECINCT)
+
+res_old <- res_old[order(res_old$Precinct),]
+geo <- geo[order(geo$PRECINCT),]
+identical(res_old$PRECINCT_CODE, geo$PRECINCT)
+
+map_old <- append_data(geo, res_old, key.shp="PRECINCT", key.data="Precinct")
+qtm(map_old, "margin")
+
+map_new <- append_data(geo, rec_df, key.shp="PRECINCT", key.data="Precinct")
+qtm(map_new, "MarginPct")
