@@ -1,0 +1,177 @@
+# Import data from Excel files
+df <- read.csv(file="~/full-voter-data-wake-county-government-data-QueryResult.csv")
+df2 <- read.csv(file="~/DistrictRelationsReport.csv")
+results_2017 <- read.csv(file="~/City of Raleigh Mayor 10_2017.csv")
+results_recent <- read.csv(file="~/007 City of Raleigh Mayor 10_08_2019.csv")
+
+# Change column names
+colnames(results_2017) = c("Precinct","Paul.Fitts", "Charles.Francis", "Nancy.McFarlane", "Write.in")
+colnames(results_recent) = c("Precinct","Mary.Ann.Baldwin","Zainab.Baloch","Charles.Francis","George.Knott","Caroline.Sullivan","Justin.L..Sutton","WRITE.IN")
+
+# Create precinct column
+results_2017$pre <- substr(results_2017$Precinct,6,10)
+results_recent$pre <- substr(results_recent$Precinct,6,10)
+
+# Winning and runner-up candidate
+results_2017$winner <- colnames(results_2017)[apply(results_2017,1,which.max)]
+results_recent$winner <- colnames(results_recent)[apply(results_recent,1,which.max)]
+
+results_2017$winner <- factor(results_2017$winner, levels = c("Paul.Fitts", "Charles.Francis", "Nancy.McFarlane"))
+results_recent$winner <- factor(results_recent$winner, levels = c("Mary.Ann.Baldwin","Zainab.Baloch","Charles.Francis","George.Knott"     
+                                                                  ,"Caroline.Sullivan","Justin.L..Sutton","WRITE.IN"))
+
+# Summary
+summary(results_2017$winner)
+summary(results_recent$winner)
+
+ggplot(results_2017, aes(x=winner)) +geom_bar() +title("Results 2017 Race for Precinct Count per Candidate")+ 
+  theme(axis.text.x = element_text(angle=30)) +xlab("Precinct Winner") +ylab("Count")
+
+ggplot(results_recent, aes(x=winner)) +geom_bar() +title("Results 2019 Race for Precinct Count per Candidate")+ 
+  theme(axis.text.x = element_text(angle=30)) +xlab("Precinct Winner") +ylab("Count")
+
+# 2017
+levels(results_2017$winner)
+x2 <- unique(results_2017$pre[results_2017$winner=='Charles.Francis'])
+x3 <- unique(results_2017$pre[results_2017$winner=='Nancy.McFarlane'])
+
+df_x2 <- df[is.element(df$precinct_lbl, x2),]
+df_x3 <- df[is.element(df$precinct_lbl, x3),]
+
+# Racial plots
+plot(df_x2$race_lbl, main="Racial Breakdown for Precincts Won by Charles Francis")
+plot(df_x3$race_lbl, main="Racial Breakdown for Precincts Won by Nancy McFarlane")
+
+# Gender plots
+plot(df_x2$gender_lbl, main="Gender Breakdown for Precincts Won by Charles Francis")
+plot(df_x3$gender_lbl, main="Gender Breakdown for Precincts Won by Nancy McFarlane")
+
+# 2019
+levels(results_recent$winner)
+x1_19 <- unique(results_recent$pre[results_recent$winner=='Mary.Ann.Baldwin'])
+x3_19 <- unique(results_recent$pre[results_recent$winner=='Charles.Francis'])
+
+df_x1_19 <- df[is.element(df$precinct_lbl, x1_19),]
+df_x3_19 <- df[is.element(df$precinct_lbl, x3_19),]
+
+plot(df_x1_19$race_lbl, main="Racial Breakdown for Precincts Won by Mary Ann Baldwin")
+plot(df_x3_19$race_lbl, main="Racial Breakdown for Precincts Won by Charles Francis")
+
+plot(df_x1_19$gender_lbl, main="Gender Breakdown for Precincts Won by Mary Ann Baldwin")
+plot(df_x3_19$gender_lbl, main="Gender Breakdown for Precincts Won by Charles Francis")
+
+# Voting history
+library(dplyr)
+dates <- c("X10_11_2011","X11_08_2011","X05_08_2012","X07_17_2012","X11_06_2012",
+           "X03_12_2013","X10_08_2013","X11_05_2013","X05_06_2014","X07_15_2014",
+           "X11_04_2014","X10_06_2015","X11_03_2015","X03_15_2016","X06_07_2016",
+           "X11_08_2016","X10_10_2017","X11_07_2017","X05_08_2018","X11_06_2018")
+vote_race <- data.frame(Date=as.Date(character()),
+                 Race=character(), 
+                 Freq_V=integer(), 
+                 Freq_M=integer(),
+                 Freq_O=integer(), 
+                 Freq_P=integer())
+vote_by_race <- matrix(ncol=3,nrow=200)
+groups <- c(quo(df$X03_12_2013), quo(df$X05_06_2014))
+date_quo <- c(quo(df$X10_11_2011),quo(df$X11_08_2011), quo(df$X05_08_2012),quo(df$X07_17_2012),
+              quo(df$X11_06_2012),quo(df$X03_12_2013),quo(df$X10_08_2013),quo(df$X11_05_2013),
+              quo(df$X05_06_2014),quo(df$X07_15_2014),quo(df$X11_04_2014),quo(df$X10_06_2015),
+              quo(df$X11_03_2015),quo(df$X03_15_2016),quo(df$X06_07_2016),quo(df$X11_08_2016),
+              quo(df$X10_10_2017),quo(df$X11_07_2017),quo(df$X05_08_2018),quo(df$X11_06_2018))
+
+count = 1
+for (i in 1:20){
+  date = dates[i]
+  print(date)
+  print(count)
+  res <- df %>% group_by(race_lbl,!!date_quo[[i]]) %>% summarise(Freq=n())
+  colnames(res) <- c("race", "action", "freq")
+  temp <- res[which(res$action=='V'),]
+  
+  for (row in 1:nrow(temp)){
+    vote_by_race[count+row,1] <- as.character(as.name(date))
+    vote_by_race[count+row,2] <- as.character(temp[[row,1]])
+    vote_by_race[count+row,3] <- temp[[row,3]]
+  }
+  count = count + nrow(temp)
+}
+# Voting (V) only
+final <- vote_by_race[complete.cases(vote_by_race), ]
+final_df <- as.data.frame(final)
+
+summary(final_df)
+colnames(final_df) <- c("date", "race", "count")
+final_df$date <- factor(final_df$date, levels = dates)
+
+final_df$count <- as.numeric(final_df$count)
+plot(final_df$date,final_df$count)
+
+library(ggplot2)
+ggplot(final_df, aes(x=date, y=count)) +
+  geom_point(aes(color=factor(race))) + title("Count per Race for Voters by Date") +
+  theme(axis.text.x = element_text(angle=30))
+
+# Proportionally
+require(dplyr)
+
+prop_table <- matrix(ncol=4,nrow=200)
+count = 1
+for (i in 1:20){
+  date = dates[i]
+  data_subset <- df[df[date]=='V',]
+  num_row <- nrow(data_subset)
+  total_df <- data_subset %>%
+    group_by(race_lbl) %>% 
+    summarise(count= n())
+  
+  colnames(total_df) <- c("race", "count")
+  
+  for (row in 1:nrow(total_df)){
+    prop_table[count+row,1] <- as.character(as.name(date))
+    prop_table[count+row,2] <- as.character(total_df[[row,1]])
+    prop_table[count+row,3] <- total_df[[row,2]]
+    prop_table[count+row,4] <- num_row
+  }
+  count = count + nrow(total_df)
+}
+#total_df[total_df[[1]]=='B',2] to get count
+
+# Voting (V) only
+prop <- prop_table[complete.cases(prop_table), ]
+prop_df <- as.data.frame(prop)
+
+summary(prop_df)
+colnames(prop_df) <- c("date", "race", "count", "total")
+prop_df$date <- factor(prop_df$date, levels = dates)
+
+prop_df$count <- as.numeric(as.character(prop_df$count))
+prop_df$total <- as.numeric(as.character(prop_df$total))
+prop_df$proportion <- round(prop_df$count/prop_df$total,2)
+
+summary(prop_df)
+plot(prop_df$race,prop_df$proportion, main="Proportion of Voters by Race")
+
+ggplot(prop_df, aes(x=date, y=proportion)) +
+  geom_point(aes(color=factor(race))) + title("Proportion Voters per Race by Date") +
+  theme(axis.text.x = element_text(angle=30))
+
+big_dates <- c("X10_11_2011","X11_08_2011","X11_06_2012",
+               "X10_08_2013","X11_05_2013","X11_04_2014","X10_06_2015","X11_03_2015",
+               "X11_08_2016","X10_10_2017","X11_06_2018")
+muni_df <- prop_df[prop_df$date %in% big_dates,]
+ggplot(muni_df, aes(x=date, y=proportion)) +
+  geom_point(aes(color=factor(race))) + title("Proportion Voters per Race by Municipal Election Dates") +
+  theme(axis.text.x = element_text(angle=30))
+
+low_black_turnout_elections <- muni_df[muni_df$race=='B' & muni_df$proportion<.15,]
+
+# Mayor turnout for all voting types
+
+x2_data <- df_x2 %>%
+  group_by(race_lbl, X10_10_2017) %>%
+  summarise(count= n())
+colnames(x2_data) <- c("race", "voting", "count")
+plot(x2_data$race, x2_data$count)
+ggplot(x2_data, aes(x=race, y=count)) +
+  geom_point(aes(color=factor(voting))) + title("Count of Voters for 2017 Municipal Election by Race")
